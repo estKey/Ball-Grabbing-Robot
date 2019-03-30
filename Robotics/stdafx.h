@@ -4,8 +4,6 @@
 
 #include <Servo.h>
 #include "QSerial.h"
-//#include "Controller.h"
-
 
 int RightWheelEncoder = 13;
 int LeftWheelEncoder = 12;
@@ -38,19 +36,20 @@ Servo Pan, Tilt, Grab;
 //
 QSerial IRReceiver;
 //
-//Controller Control;
+//Controller Condtrol;
 
 ///*** Constant Configuration ***///
-int LTHRESH = 900;					// LEFT sensor level xxx
-int CTHRESH = 900;					// CENTRE sensor level yyy
-int RTHRESH = 900;					// RIGHT sensor level zzz
+int LTHRESH = 850;					// LEFT sensor level xxx
+int CTHRESH = 850;					// CENTRE sensor level yyy
+int RTHRESH = 850;					// RIGHT sensor level zzz
 
 
 int  BaseSpeed = 115;
 
-void directionController(int direction) {
-	digitalWrite(M1, direction);
-	digitalWrite(M2, direction);
+void directionController(int ldirection, int rdirection) {
+	digitalWrite(M1, ldirection);
+	digitalWrite(M2, rdirection);
+  delay(100);
 }
 
 void motorController(float speedFactor) {
@@ -62,46 +61,72 @@ void motorController(float speedFactor) {
 	analogWrite(E2, BaseSpeed * speedFactor);
 }
 
+// Forward Backward Stop
 void drive(int direction, float speedFactor){
 	if (direction == -1) 
 		motorController(0);
 	else {
-		directionController(direction);
+		directionController(direction, direction);
 		motorController(speedFactor);
 	}
 }
 
 void followLine(){
     int ir[3] = {0};
-    while (ir[0] < LTHRESH && ir[1] < CTHRESH && ir[2] < RTHRESH) {
+    drive(1, 1.0);
+    while (1) {
     ir[0] = analogRead(LSENSOR);
-	Serial.print("LSENSOR: ");
-	Serial.println(ir[0]);
-    if (ir[0] < LTHRESH) {
-        digitalWrite(E1, HIGH);
-        digitalWrite(M1, HIGH);
-        digitalWrite(E2, HIGH);
-        digitalWrite(M2, HIGH);
-    }
+	  Serial.print("LSENSOR: ");
+	  Serial.println(ir[0]);
     ir[1] = analogRead(CSENSOR);
-	Serial.print("CSENSOR: ");
-	Serial.println(ir[1]);
-    if (ir[0] < CTHRESH) {
-        digitalWrite(E1, HIGH);
-        digitalWrite(M1, HIGH);
-        digitalWrite(E2, HIGH);
-        digitalWrite(M2, HIGH);
-    }
+	  Serial.print("CSENSOR: ");
+	  Serial.println(ir[1]);
     ir[2] = analogRead(RSENSOR);
-	Serial.print("RSENSOR: ");
-	Serial.println(ir[2]);
-    if (ir[0] < RTHRESH) {
-        digitalWrite(E1, HIGH);
-        digitalWrite(M1, HIGH);
-        digitalWrite(E2, HIGH);
-        digitalWrite(M2, HIGH);
+	  Serial.print("RSENSOR: ");
+	  Serial.println(ir[2]);
+    if(ir[1] > CSENSOR && ir[2] < RTHRESH && ir[0] < LTHRESH){
+        // stay forward
+        Serial.println("forward");
+        directionController(1,1);
+    }
+    else if (ir[2] > RTHRESH && ir[0] < LTHRESH) {
+        // turn right
+        Serial.println("turn right");
+        directionController(1,0);
+    }
+    else if (ir[0] > LTHRESH && ir[2] < RTHRESH) {
+        // turn left
+        Serial.println("turn left");
+        directionController(0,1);
+    }
+    else{
+    while(ir[0] < LTHRESH && ir[1] < CTHRESH && ir[2] < RTHRESH){
+      ir[0] = analogRead(LSENSOR);
+      //Serial.print("LSENSOR: ");
+      //Serial.println(ir[0]);
+      ir[1] = analogRead(CSENSOR);
+      Serial.print("CSENSOR: ");
+      Serial.println(ir[1]);
+      ir[2] = analogRead(RSENSOR);
+      //Serial.print("RSENSOR: ");
+      //Serial.println(ir[2]);
+      Serial.println("Our of the Line!");
+    }
+    while(ir[0] > LTHRESH && ir[1] > CTHRESH && ir[2] > RTHRESH){
+      ir[0] = analogRead(LSENSOR);
+      //Serial.print("LSENSOR: ");
+      //Serial.println(ir[0]);
+      ir[1] = analogRead(CSENSOR);
+      Serial.print("CSENSOR: ");
+      Serial.println(ir[1]);
+      ir[2] = analogRead(RSENSOR);
+      //Serial.print("RSENSOR: ");
+      //Serial.println(ir[2]);
+      Serial.println("Too Bright!");
+    }
     }
   }
+    
 }
 
 #endif
