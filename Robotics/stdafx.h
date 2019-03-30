@@ -41,44 +41,16 @@ QSerial IRReceiver;
 //Controller Control;
 
 ///*** Constant Configuration ***///
-int LTHRESH = 640;					// LEFT sensor level xxx
-int CTHRESH = 640;					// CENTRE sensor level yyy
-int RTHRESH = 640;					// RIGHT sensor level zzz
+			
 
 
 int  BaseSpeed = 115;
 
-/*
-void adjust(int dir){
-
-  analogWrite(M1, );
-  analogWrite(M2, );
-
-  
-}*/
 
 
 
-/*
-void motorController(float speedFactor) {
-	Serial.print("right spped: ");
-	Serial.println(BaseSpeed * speedFactor);
-	analogWrite(E1, BaseSpeed * speedFactor);
-	Serial.print("left spped: ");
-	Serial.println(BaseSpeed * speedFactor);
-	analogWrite(E2, BaseSpeed * speedFactor);
-}
 
-void drive(int direction, float speedFactor){
-	if (direction == -1) 
-		motorController(0);
-	else {
-		directionController(direction);
-		motorController(speedFactor);
-	}
-}
-*/
-void followLine(){
+int followLine(){
 
 
     
@@ -101,8 +73,8 @@ void followLine(){
     digitalWrite(rightDirection, HIGH);
 
     
-    if (ir[0] > LTHRESH) {//turn left
-         analogWrite(leftSpeed, 0);
+    if (ir[0] > THRESH) {             //turn left
+         analogWrite(leftSpeed, 30);
          analogWrite(rightSpeed, 90);
          //delay(10);
          
@@ -110,16 +82,18 @@ void followLine(){
     }
     
     
-    else if (ir[2] > RTHRESH) {//turn right
+    else if (ir[2] > THRESH) {          //turn right
         analogWrite(leftSpeed, 90);
-        analogWrite(rightSpeed, 0);
+        analogWrite(rightSpeed, 30);
         //delay(10);
         
     }
 
+    else if (ir[0] > THRESH && ir[1] > THRESH && ir[2] > THRESH){
+      int out = 1;
+    }
     
-    
-    else{
+    else{               //keep straight
       analogWrite(leftSpeed, 90);
       analogWrite(rightSpeed, 90);
     
