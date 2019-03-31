@@ -7,7 +7,11 @@
 #include "Info.h"
 
 Info teamInfo;
-
+// Coordinate
+typedef struct _Coord {
+  int x;
+  int y;
+}Coord;
 
 int RightWheelEncoder = 13;
 int LeftWheelEncoder = 12;
@@ -42,9 +46,44 @@ QSerial IRReceiver;
 //Controller Control;
 
 ///*** Constant Configuration ***///
-int LTHRESH = 640;					// LEFT sensor level xxx
-int CTHRESH = 640;					// CENTRE sensor level yyy
-int RTHRESH = 640;					// RIGHT sensor level zzz
+int LTHRESH = 400;					// LEFT sensor level xxx
+int CTHRESH = 400;					// CENTRE sensor level yyy
+int RTHRESH = 400;					// RIGHT sensor level zzz
+
+Coord path1[3][15][4] = {{},
+                    {},
+                    {}};
+
+void waitBumper(){
+  while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
+  Serial.print("Triggered");
+  delay(1000);
+}
+
+int ReceiveIR() {
+  int rec = IRReceiver.receive(200);
+  while (rec == 0 || rec == -1 || rec == -2) {
+    rec = IRReceiver.receive(200);
+  }
+  Serial.println(rec);
+  return rec;
+}
+
+void printLineLevel(int ir[]){
+    Serial.print("LSENSOR: ");
+    Serial.println(ir[0]);
+    Serial.print("CSENSOR: ");
+    Serial.println(ir[1]);
+    Serial.print("RSENSOR: ");
+    Serial.println(ir[2]);
+}
+
+void printMotorSpeed(float lspeed, float rspeed){
+  Serial.print("right spped: ");
+  Serial.println(rspeed);
+  Serial.print("left spped: ");
+  Serial.println(lspeed);
+}
 
 void directionController(int ldirection, int rdirection){
     digitalWrite(leftDirection, ldirection);
@@ -52,12 +91,9 @@ void directionController(int ldirection, int rdirection){
 }
 
 void motorController(float lspeed, float rspeed) {
-	Serial.print("right spped: ");
-	Serial.println(rspeed);
 	analogWrite(leftSpeed, rspeed);
-	Serial.print("left spped: ");
-	Serial.println(lspeed);
 	analogWrite(rightSpeed, lspeed);
+  printMotorSpeed(lspeed, rspeed);
 }
 
 void goStraight(int direction, float speed){
@@ -69,7 +105,7 @@ void goStraight(int direction, float speed){
 	}
 }
 
-// 0 left 1 full turn 2 right
+// -1 left 0 full turn 1 right
 void pivot(int direction){
   Serial.println("Pivot");
   motorController(130,130);
@@ -91,32 +127,24 @@ void pivot(int direction){
 }
 
 void followLine(){
+  while(1){
     int ir[3] = {0};
     ir[0] = analogRead(LSENSOR);
-	  Serial.print("LSENSOR: ");
-	  Serial.println(ir[0]);
-
     ir[1] = analogRead(CSENSOR);
-    Serial.print("CSENSOR: ");
-    Serial.println(ir[1]);
-
     ir[2] = analogRead(RSENSOR);
-    Serial.print("RSENSOR: ");
-    Serial.println(ir[2]);
+    //printLineLevel(ir);
 
     // Forward direction
     directionController(1,1);
 
-    if (ir[0] > LTHRESH) //turn left
+    if(ir[0] > LTHRESH) //turn left
          motorController(0,90);
-    else if (ir[2] > RTHRESH)//turn right
+    else if(ir[2] > RTHRESH)//turn right
          motorController(90,0);
+    else if(ir[0] > LTHRESH && ir[1] > CTHRESH && ir[2] > RTHRESH) break;
     else motorController(90,90);
-}
-
-void tracePath(){
-  Serial.println("Start to trace path");
-  
+  }
+  Serial.println("Meet Intersection");
 }
 
 // Grabber Servo
@@ -156,8 +184,66 @@ void depositBall(){
 
 void initRobot(){
   Serial.println("Press Bumper to Start");
-  while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
+  waitBumper();
   Serial.println("Starting");
   initArm();
   }
+
+int choosePath(){
+  int data = 0;
+  while (data != '0' && data != '1' && data != '2') {
+    data = ReceiveIR();
+  }
+  switch (data)
+  {
+  case '0': return 0;
+  case '1': return 1;
+  case '2': return 2;
+  default:
+    Serial.println("Invalid IR Signal");
+    return -1;
+  }
+}
+/*
+Coord computePath(Coord start, Coord dist)
+{
+  return { (start.x - dist.x), (start.y - dist.y) };
+}
+*/
+
+Coord getRoute(Coord start, Coord dist)
+{
+  return { (start.x - dist.x), (start.y - dist.y) };
+}
+
+int *getInstruction(Coord route) {
+  int instruction[2] = { 0 };
+  if (route.x == 0) {
+    instruction[0] = -1;
+    instruction[1] = route.y;
+  }
+  else {
+    instruction[0] = 1;
+    instruction[1] = route.x;
+  }
+  return instruction;
+}
+
+void tracePath(Coord path[]){
+  Serial.println("Start to trace path");
+  for (int i = 0; i < 2; i++)
+  {
+    Coord route = getRoute(path[i], path[i + 1]);
+    int *instruction = getInstruction(route);
+    pivot(instruction[0] == -1);
+    for(int i = 0; i < instruction[1]; i++){
+      followLine();
+    }
+  }
+}
+
+void process(){
+  
+}
+
 #endif

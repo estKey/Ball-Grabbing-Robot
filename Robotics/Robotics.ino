@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 void setup() {
+  Serial.flush(); 
   // Lisiten  Port
   Serial.begin(9600);
   // PinModes
@@ -23,13 +24,15 @@ void setup() {
 void loop() {
   teamInfo.displayInfo();
   initRobot();
-  delay(1000);
-  /*
+  
   while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
   catchBall(); 
   while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
   depositBall(); 
-  */
-  pivot();
+  
+  //followLine();
+  //pivot(0);
   delay(1000);
+  Serial.println("Press Bumper to restart");
+  waitBumper();
 }
