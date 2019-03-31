@@ -21,10 +21,15 @@ void setup() {
 }
 
 void loop() {
+  teamInfo.displayInfo();
   initRobot();
+  delay(1000);
+  /*
   while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
   catchBall(); 
   while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
   depositBall(); 
-  while(1){};
+  */
+  pivot();
+  delay(1000);
 }
