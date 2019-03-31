@@ -1,5 +1,9 @@
 #include "stdafx.h"
 
+Coord path[3][5][3] = {{{2,0},{1,2},{0,2}},
+                    {0},
+                    {0}};
+
 void setup() {
   Serial.flush(); 
   // Lisiten  Port
@@ -24,14 +28,9 @@ void setup() {
 void loop() {
   teamInfo.displayInfo();
   initRobot();
-  
-  while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
-  catchBall(); 
-  while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
-  depositBall(); 
-  
-  //followLine();
-  //pivot(0);
+  int index = 0;
+  //int index = choosePath();
+  process(path[index]);
   delay(1000);
   Serial.println("Press Bumper to restart");
   waitBumper();

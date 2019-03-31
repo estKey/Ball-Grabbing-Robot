@@ -50,10 +50,6 @@ int LTHRESH = 400;					// LEFT sensor level xxx
 int CTHRESH = 400;					// CENTRE sensor level yyy
 int RTHRESH = 400;					// RIGHT sensor level zzz
 
-Coord path1[3][15][4] = {{},
-                    {},
-                    {}};
-
 void waitBumper(){
   while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
   Serial.print("Triggered");
@@ -204,12 +200,6 @@ int choosePath(){
     return -1;
   }
 }
-/*
-Coord computePath(Coord start, Coord dist)
-{
-  return { (start.x - dist.x), (start.y - dist.y) };
-}
-*/
 
 Coord getRoute(Coord start, Coord dist)
 {
@@ -242,8 +232,31 @@ void tracePath(Coord path[]){
   }
 }
 
-void process(){
-  
+Coord *reverse(Coord path[]){
+  Coord dist[3];
+  for(int i = 0; i < 3; i++)
+    dist[i] = path[3-i];
+  return dist;
+}
+
+void process(Coord path[][3]){
+  for(int i = 0; i < 5; i++){
+    tracePath(path[i]);
+    while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
+    goStraight(0, 100);
+    delay(1000);
+    goStraight(-1, 0);
+    catchBall();
+    goStraight(0, 100);
+    delay(1000);
+    goStraight(-1, 0);
+    pivot(0);
+    tracePath(reverse(path[i]));
+    while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
+    depositBall(); 
+    delay(100);
+    pivot(0);
+  }
 }
 
 #endif
