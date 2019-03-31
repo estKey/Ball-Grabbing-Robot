@@ -4,7 +4,6 @@
 
 #include <Servo.h>
 #include "QSerial.h"
-//#include "Controller.h"
 
 
 int RightWheelEncoder = 13;
@@ -45,45 +44,31 @@ int LTHRESH = 640;					// LEFT sensor level xxx
 int CTHRESH = 640;					// CENTRE sensor level yyy
 int RTHRESH = 640;					// RIGHT sensor level zzz
 
-
-int  BaseSpeed = 115;
-
-/*
-void adjust(int dir){
-
-  analogWrite(M1, );
-  analogWrite(M2, );
-
-  
-}*/
-
-
-
-/*
-void motorController(float speedFactor) {
-	Serial.print("right spped: ");
-	Serial.println(BaseSpeed * speedFactor);
-	analogWrite(E1, BaseSpeed * speedFactor);
-	Serial.print("left spped: ");
-	Serial.println(BaseSpeed * speedFactor);
-	analogWrite(E2, BaseSpeed * speedFactor);
+void directionController(int direction){
+    digitalWrite(leftDirection, direction);
+    digitalWrite(rightDirection, direction);
 }
 
-void drive(int direction, float speedFactor){
+void motorController(float lspeed, float rspeed) {
+	Serial.print("right spped: ");
+	Serial.println(rspeed);
+	analogWrite(leftSpeed, rspeed);
+	Serial.print("left spped: ");
+	Serial.println(lspeed);
+	analogWrite(rightSpeed, lspeed);
+}
+
+void forward(int direction, float speed){
 	if (direction == -1) 
-		motorController(0);
+		motorController(0, 0);
 	else {
 		directionController(direction);
-		motorController(speedFactor);
+		motorController(speed, speed);
 	}
 }
-*/
+
 void followLine(){
-
-
-    
-  
-    int ir[3];
+    int ir[3] = {0};
     //while (ir[0] < LTHRESH && ir[1] < CTHRESH && ir[2] < RTHRESH) {
     ir[0] = analogRead(LSENSOR);
 	  Serial.print("LSENSOR: ");
@@ -97,33 +82,57 @@ void followLine(){
     Serial.print("RSENSOR: ");
     Serial.println(ir[2]);
 
-    digitalWrite(leftDirection, HIGH);
-    digitalWrite(rightDirection, HIGH);
+    // Forward direction
+    directionController(1);
 
-    
-    if (ir[0] > LTHRESH) {//turn left
-         analogWrite(leftSpeed, 0);
-         analogWrite(rightSpeed, 90);
+    if (ir[0] > LTHRESH) //turn left
+         motorController(0,90);
          //delay(10);
-         
-
-    }
-    
-    
-    else if (ir[2] > RTHRESH) {//turn right
-        analogWrite(leftSpeed, 90);
-        analogWrite(rightSpeed, 0);
+    else if (ir[2] > RTHRESH)//turn right
+         motorController(90,0);
         //delay(10);
-        
-    }
-
-    
-    
-    else{
-      analogWrite(leftSpeed, 90);
-      analogWrite(rightSpeed, 90);
-    
-    }
+    else motorController(90,90);
 }
 
+// Grabber Servo
+boolean grabBall(){
+  int force = 0,
+      sensor = 0;
+  while(sensor < 200){
+    Grab.write(force++);
+    sensor = analogRead(GripFSR);
+  }
+  Serial.println("Ball Grabed.");
+  return true;
+}
+
+void initArm(){
+  Pan.write(90);
+  Tilt.write(180);
+  Grab.write(0);
+}
+
+void catchBall(){
+  Serial.println("Catchinging Ball...");
+  Pan.write(90);
+  Tilt.write(90);
+  Grab.write(0);
+  if(grabBall())
+    Tilt.write(180);
+}
+
+void depositBall(){
+  Serial.println("Depositing Ball...");
+  Tilt.write(90);
+  delay(1000);
+  Grab.write(0);
+  Serial.println("Ball Deposited.");
+}
+
+void initRobot(){
+  Serial.println("Press Bumper to Start");
+  while (digitalRead(LeftBumper) == HIGH && digitalRead(RightBumper) == HIGH) { delay(1); }
+  Serial.println("Starting");
+  initArm()
+;}
 #endif
