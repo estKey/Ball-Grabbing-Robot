@@ -1,3 +1,3 @@
-# ELEC299Robotics
-Queen‘s University ELEC 299 Arduino Competition
-## ELEC299 Team 16
+# Ball-Grabbing Robot
+Queen‘s University Robotics Arduino Competition
+## Team 16
